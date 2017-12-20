@@ -1,0 +1,93 @@
+// Declare card function component
+const Card = function(props) {
+    // Setup the styles to be used
+    let parentDivStyle = { margin: '1em' };
+    let infoStyling = { display: 'inline-block', marginLeft: 10 };
+    let nameHeaderStyle = { fontSize: '1.25em', fontWeight: 'bold' }
+    let imgStyle = { width: 75, height: 75  }
+  
+    return(
+        <div style = { parentDivStyle } >
+            <img style = { imgStyle } src= { props.avatar_url } />
+            <div style = { infoStyling } >
+                <div style = { nameHeaderStyle } >{ props.name }</div>
+                <div>{ props.company }</div>
+            </div>
+        </div>
+    );
+};
+
+// Declare the card list function component which will return a list of cards
+const CardList = function(props) {
+	return(
+        <div>
+            { props.cards.map(card => <Card key = {card.id} { ...card } />) }
+        </div>
+    );
+};
+
+// Declare the input form component for user to select github user from
+class Form extends React.Component {
+    state = { userName : '', style : { borderColor: 'none' } };
+  
+    handleSubmit = (event) => {
+  	    event.preventDefault();
+    
+        axios.get(`https://api.github.com/users/${this.state.userName}`)
+            .then(resp => {      	
+                this.props.onSubmit(resp.data);
+                this.setState(prevState => ({
+                    style: { borderColor: 'green' },
+                    userName: ''
+                }));
+            })
+            .catch(error => {
+                alert("User does not exist.");
+                this.setState(prevState => ({
+                    style: { borderColor: 'red' },
+                    userName: prevState.userName
+                }));
+            });
+    };
+  
+  handleChange = (event) => {
+    this.setState({ userName: event.target.value });
+  }
+  
+  render() {
+  	return(
+    	<form style={{ marginLeft: 10 }} onSubmit = { this.handleSubmit } >
+      	<input type="text"
+               style = { {borderColor: this.state.style.borderColor} }
+               placeholder="Github Username" 
+               onChange = {this.handleChange}
+               value = {this.state.userName}
+               required />
+        <button type="submit">Add</button>
+      </form>
+    )
+  };
+};
+
+// Declare the page container app
+class App extends React.Component {
+  state = { cards: [] };
+	
+  addNewCard = (cardInfo) => {
+  	this.setState(prevState => ({
+    	cards: prevState.cards.concat(cardInfo)
+    }));
+  };
+  
+	render() {
+        return(
+            <div>
+                <Form onSubmit={this.addNewCard} />
+                <CardList cards={this.state.cards}/>
+            </div>
+        )
+    }
+};
+
+// Render the app class component to the mountNode element
+ReactDOM.render(<App />, mountNode)
